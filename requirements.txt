@@ -1,19 +1,19 @@
 # Core Dependencies
 # ==============
 # OpenAI API client for Whisper transcription
-openai>=1.3.5
+openai>=1.60.2
 
 # Environment Configuration
 # =======================
 # For loading environment variables from .env file
-python-dotenv>=1.0.0
+python-dotenv>=1.0.1
 
 # Media Processing
 # ==============
-# For handling audio/video file operations
-moviepy>=1.0.3
+# PyAV for fast audio/video processing (replaces MoviePy)
+av>=13.0.0
 
-# HTTP Client
-# ==========
-# Required by OpenAI client for API communication
-httpx>=0.24.1 
+# Async File Operations
+# ====================
+# Async file I/O operations
+aiofiles>=24.1.0
