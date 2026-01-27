@@ -1,6 +1,6 @@
 <div align="center">
 
-# media-to-text 🎥 ➡️ 📝
+# media-to-text
 
 **AI-Powered Media Transcription Using OpenAI's Whisper**
 
@@ -13,7 +13,7 @@
 
 ---
 
-### 🎯 Overview
+### Overview
 
 A high-performance command-line tool that uses AI to automatically:
 - Convert any audio/video to text with high accuracy
@@ -27,13 +27,13 @@ A high-performance command-line tool that uses AI to automatically:
 - Combine multiple transcripts into a single file
 
 **Key Features:**
-- ⚡ Async/concurrent chunk processing (5 simultaneous API calls per file)
-- ⚡ PyAV for fast audio extraction with FFmpeg fallback
-- ⚡ Optimized audio settings reduce API processing time by 20-50%
-- ⚡ Fresh API client per file prevents connection pool hangs
-- ⚡ Async file I/O operations throughout
-- ⚡ **Brew-style multi-line progress display** with ANSI terminal support
-- ⚡ **Smart terminal fallback** for CI/CD and non-ANSI environments
+- Async/concurrent chunk processing (5 simultaneous API calls per file)
+- PyAV for fast audio extraction with FFmpeg fallback
+- Optimized audio settings reduce API processing time by 20-50%
+- Fresh API client per file prevents connection pool hangs
+- Async file I/O operations throughout
+- **Brew-style multi-line progress display** with ANSI terminal support
+- **Smart terminal fallback** for CI/CD and non-ANSI environments
 
 This is an open-source setup designed to be easily:
 - Forked and modified for your specific needs
@@ -43,7 +43,7 @@ This is an open-source setup designed to be easily:
 
 Feel free to use, modify, and share this tool as you see fit!
 
-### ⚡️ Quick Start
+### Quick Start
 
 1. **Set Up Environment**
 ```bash
@@ -71,23 +71,23 @@ python transcribe.py
 python combine_transcripts.py
 ```
 
-### 📁 Supported Formats
+### Supported Formats
 
 <div align="left">
 
-| Video Formats 🎥 | Audio Formats 🎵 |
-|:---------------:|:---------------:|
+| Video Formats | Audio Formats |
+|:-------------:|:-------------:|
 | `.mp4` `.mkv` | `.mp3` `.wav` |
 | `.webm` `.avi` | `.flac` `.aac` |
 | `.mov` `.wmv` | `.m4a` `.ogg` |
 | `.flv` `.m4v` | `.opus` `.wma` |
 | `.3gp` | `.aiff` `.amr` |
 
-**✨ Auto-Conversion:** Unsupported formats (like `.caf`) are automatically converted to MP3 using FFmpeg before transcription.
+**Auto-Conversion:** Unsupported formats (like `.caf`) are automatically converted to MP3 using FFmpeg before transcription.
 
 </div>
 
-### 📦 Requirements
+### Requirements
 
 - Python 3.8+
 - FFmpeg (for audio extraction and format conversion)
@@ -100,7 +100,7 @@ python combine_transcripts.py
   aiofiles>=24.1.0
   ```
 
-### 💡 Pro Tips
+### Pro Tips
 
 **For Best Results:**
 - Use clear audio with minimal background noise
@@ -129,7 +129,7 @@ python combine_transcripts.py
 - Files are read and processed concurrently for speed
 - Combined file optimized for readability
 
-### 📂 Project Structure
+### Project Structure
 ```
 media-to-text/
 ├── transcribe.py         # Main transcription script (async)
@@ -141,24 +141,24 @@ media-to-text/
 └── temp/               # Processing files
 ```
 
-### 📝 Changelog
+### Changelog
 
 #### Version 1.1.0 (2026-01-27)
 **Brew-Style Progress Display & Async Architecture**
-- ⚡ **Brew-style multi-line progress display** with real-time chunk status updates
-- ⚡ **ANSI terminal support** with cursor control for in-place updates
-- ⚡ **Smart fallback mode** for CI/CD, NO_COLOR, and non-TTY environments
-- ⚡ **ETA calculations** with elapsed time and remaining time estimates
-- ⚡ **Async/concurrent architecture** with 5 parallel chunk processing per file
-- ⚡ **PyAV integration** replacing MoviePy for faster audio extraction
-- ⚡ **Optimized audio processing** (16kHz/16kbps/mono) for 20-50% faster API transcription
-- ⚡ **Auto-conversion** of unsupported formats (e.g., .caf) to MP3 using FFmpeg
-- ⚡ **Fresh API client per file** prevents connection pool hangs
-- 🔧 **Signal handling** (SIGINT/SIGTERM) restores cursor visibility on interrupt
-- 🔧 **Terminal capability detection** (TTY, NO_COLOR, Windows ctypes support)
-- 🔧 Removed YouTube support to simplify codebase
-- 🐛 Fixed parallel chunk processing for optimal speed
-- 📝 Added CLAUDE.md for AI assistant context
+- **Brew-style multi-line progress display** with real-time chunk status updates
+- **ANSI terminal support** with cursor control for in-place updates
+- **Smart fallback mode** for CI/CD, NO_COLOR, and non-TTY environments
+- **ETA calculations** with elapsed time and remaining time estimates
+- **Async/concurrent architecture** with 5 parallel chunk processing per file
+- **PyAV integration** replacing MoviePy for faster audio extraction
+- **Optimized audio processing** (16kHz/16kbps/mono) for 20-50% faster API transcription
+- **Auto-conversion** of unsupported formats (e.g., .caf) to MP3 using FFmpeg
+- **Fresh API client per file** prevents connection pool hangs
+- **Signal handling** (SIGINT/SIGTERM) restores cursor visibility on interrupt
+- **Terminal capability detection** (TTY, NO_COLOR, Windows ctypes support)
+- Removed YouTube support to simplify codebase
+- Fixed parallel chunk processing for optimal speed
+- Added CLAUDE.md for AI assistant context
 
 #### Version 1.0.1 (2024-12-17)
 - Added .gitignore file
@@ -171,18 +171,18 @@ media-to-text/
 - Automatic chunk processing for files >25MB
 - Transcript combination utility
 
-### 🤝 Roadmap
+### Roadmap
 
 Check out our [Future Updates & Enhancements](FUTURE_UPDATES.md) document for planned features and improvements.
 
-### 🤝 Contributing
+### Contributing
 
 Found a bug or want to contribute? Feel free to:
 - Open an issue
 - Submit a pull request
 - Suggest improvements
 
-### 📄 License
+### License
 
 MIT License - Use it, modify it, share it.
 
@@ -190,6 +190,6 @@ MIT License - Use it, modify it, share it.
 
 <div align="center">
 
-**Made with ❤️ by [Zer0Wav3s](https://github.com/Zer0Wav3s)**
+**Made by [Zer0Wav3s](https://github.com/Zer0Wav3s)**
 
 </div>
