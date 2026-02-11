@@ -10,7 +10,7 @@ This script provides a robust solution for transcribing media files by:
 6. Implementing error handling and cleanup
 
 Author: OkhDev
-Version: 1.2.0
+Version: 1.3.0
 """
 
 import os
@@ -35,12 +35,22 @@ from dataclasses import dataclass, field
 # Define Colors and Symbols first
 class Colors:
     """ANSI color codes for terminal output."""
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    BLUE = '\033[94m'
-    YELLOW = '\033[93m'
-    RESET = '\033[0m'
+    # Styles
     BOLD = '\033[1m'
+    DIM = '\033[2m'
+    UNDERLINE = '\033[4m'
+    RESET = '\033[0m'
+
+    # Colors
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+    GRAY = '\033[90m'
+
 
 class Symbols:
     """Unicode symbols for status messages."""
@@ -58,37 +68,7 @@ class Symbols:
     STAR = '★'
     SPARKLES = '✧'
 
-# First, ensure all requirements are installed
-def install_requirements():
-    """Install or update packages from requirements.txt."""
-    try:
-        requirements_path = Path('requirements.txt')
-        if not requirements_path.exists():
-            print(f"{Colors.RED}{Symbols.CROSS} requirements.txt not found{Colors.RESET}")
-            return False
-            
-        print(f"{Colors.BLUE}{Symbols.INFO} Checking dependencies...{Colors.RESET}")
-        
-        # Run pip install with quiet output
-        subprocess.check_call([
-            sys.executable, 
-            '-m', 
-            'pip', 
-            'install', 
-            '-r', 
-            'requirements.txt',
-            '--upgrade',
-            '--quiet'
-        ])
-        
-        print(f"{Colors.GREEN}{Symbols.CHECK} All dependencies are up to date{Colors.RESET}")
-        return True
-        
-    except subprocess.CalledProcessError as e:
-        print(f"{Colors.RED}{Symbols.CROSS} Failed to install requirements: {str(e)}{Colors.RESET}")
-        return False
-
-# Now import modules that come from requirements.txt
+# Import third-party modules
 import openai
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
@@ -100,11 +80,11 @@ import asyncio
 # Configure logging
 logging.getLogger('libav').setLevel(logging.ERROR)
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Constants and Configuration
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 GITHUB_REPO = "Zer0Wav3s/media-to-text"
 
 MAX_FILE_SIZE = 25 * 1024 * 1024  # 25MB in bytes
@@ -113,9 +93,9 @@ UPDATE_INTERVAL = 15  # seconds
 SUPPORTED_VIDEO_FORMATS = {'.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm', '.m4v', '.3gp'}
 SUPPORTED_AUDIO_FORMATS = {'.mp3', '.wav', '.aac', '.ogg', '.wma', '.m4a', '.opus', '.flac', '.aiff', '.amr'}
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Dependency Management
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class DependencyManager:
     """Handles checking and installing required Python packages."""
@@ -208,9 +188,9 @@ class DependencyManager:
             else:
                 print_status("Please enter 'y' or 'n'", "warning")
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Utility Functions
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def format_time(seconds: float) -> str:
     """Format time duration into a human-readable string."""
@@ -225,31 +205,65 @@ def format_time(seconds: float) -> str:
     else:
         return f"{secs}s"
 
-def print_status(message: str, status: str = "info") -> None:
-    """Print a formatted status message with appropriate color and symbol."""
-    status_config = {
-        "success": (Colors.GREEN, Symbols.CHECK),
-        "error": (Colors.RED, Symbols.CROSS),
-        "warning": (Colors.YELLOW, Symbols.WARNING),
-        "info": (Colors.RESET, Symbols.INFO),
-        "process": (Colors.BLUE, Symbols.PROCESS),
-    }
-    
-    color, symbol = status_config.get(status, (Colors.RESET, Symbols.INFO))
-    print(f"{color}{symbol} {message}{Colors.RESET}")
+def print_success(message: str) -> None:
+    """Print a success message."""
+    print(f"{Colors.GREEN}{Colors.BOLD}{Symbols.CHECK}{Colors.RESET} {Colors.GREEN}{message}{Colors.RESET}")
 
-def print_header(title: str = "Media Transcription Tool") -> None:
-    """Print a styled header for the application."""
-    print(f"\n{Colors.BLUE}{Symbols.MEDIA}  {title}  {Symbols.AUDIO}{Colors.RESET}")
-    print(f"{Colors.BLUE}{'─' * 40}{Colors.RESET}")
+
+def print_error(message: str) -> None:
+    """Print an error message."""
+    print(f"{Colors.RED}{Symbols.CROSS}{Colors.RESET} {Colors.RED}{message}{Colors.RESET}")
+
+
+def print_warning(message: str) -> None:
+    """Print a warning message."""
+    print(f"{Colors.YELLOW}{Symbols.WARNING}{Colors.RESET} {Colors.YELLOW}{message}{Colors.RESET}")
+
+
+def print_info(message: str) -> None:
+    """Print an info message."""
+    print(f"{Colors.BLUE}{Symbols.INFO}{Colors.RESET} {message}")
+
+
+def print_process(message: str) -> None:
+    """Print a process/in-progress message."""
+    print(f"{Colors.BLUE}{Symbols.PROCESS}{Colors.RESET} {message}")
+
+
+def print_status(message: str, status: str = "info") -> None:
+    """Print a formatted status message (dispatches to specific helpers)."""
+    dispatch = {
+        "success": print_success,
+        "error": print_error,
+        "warning": print_warning,
+        "info": print_info,
+        "process": print_process,
+    }
+    dispatch.get(status, print_info)(message)
+
+
+def print_header() -> None:
+    """Print the application header."""
+    W = 55
+    line1 = f"  MEDIA TO TEXT v{VERSION}  - Whisper API transcription"
+    line2 = "  Async chunked processing with progress tracking"
+    pad1 = ' ' * (W - len(line1))
+    pad2 = ' ' * (W - len(line2))
+    print()
+    print(f"{Colors.CYAN}{Colors.BOLD}╔{'═' * W}╗{Colors.RESET}")
+    print(f"{Colors.CYAN}{Colors.BOLD}║{Colors.RESET}  {Colors.YELLOW}{Colors.BOLD}MEDIA TO TEXT{Colors.RESET} {Colors.DIM}v{VERSION}{Colors.RESET}  {Colors.GRAY}- Whisper API transcription{pad1}{Colors.CYAN}{Colors.BOLD}║{Colors.RESET}")
+    print(f"{Colors.CYAN}{Colors.BOLD}║{Colors.RESET}  {Colors.GRAY}Async chunked processing with progress tracking{pad2}{Colors.CYAN}{Colors.BOLD}║{Colors.RESET}")
+    print(f"{Colors.CYAN}{Colors.BOLD}╚{'═' * W}╝{Colors.RESET}")
+    print()
+
 
 def print_divider() -> None:
-    """Print a divider line for visual separation."""
-    print(f"\n{Colors.BLUE}{'─' * 60}{Colors.RESET}\n")
+    """Print a visual divider."""
+    print(f"{Colors.GRAY}{'─' * 56}{Colors.RESET}")
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Progress Tracking
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class ProgressTracker:
     """Handles progress tracking and status updates during processing."""
@@ -287,9 +301,9 @@ class ProgressTracker:
         print()  # Add newline after stopping progress
         time.sleep(0.1)
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Multi-Line Progress Display (Brew-Style)
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class ChunkStatus(Enum):
     """Status states for chunk transcription."""
@@ -826,9 +840,9 @@ def create_progress_display():
         return SimpleFallbackDisplay()
 
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Environment Setup
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class EnvironmentSetup:
     """Handles environment configuration and directory setup."""
@@ -873,9 +887,9 @@ class EnvironmentSetup:
             print_status(f"Error creating directories: {str(e)}", "error")
             raise
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Media Processing
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class MediaProcessor:
     """
@@ -1147,9 +1161,9 @@ class MediaProcessor:
             print_status(f"Audio extraction failed: {str(e)}", "error")
             return []
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Transcription
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class AsyncTranscriber:
     """
@@ -1343,9 +1357,9 @@ class AsyncTranscriber:
         async with aiofiles.open(file_path, 'a', encoding='utf-8') as f:
             await f.write(text + '\n\n')
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Main Application
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class TranscriptionApp:
     """
@@ -1469,18 +1483,25 @@ class TranscriptionApp:
                 print_status("Add media files to 'media-files' folder", "info")
                 return
 
-            print(f"\n{Colors.BLUE}Processing {len(media_files)} file(s) SEQUENTIALLY (one file at a time){Colors.RESET}")
-            print(f"{Colors.BLUE}Each file's chunks will be transcribed IN PARALLEL (5 concurrent for speed){Colors.RESET}")
-            print(f"{Colors.BLUE}Fresh API client created for each file to prevent connection issues{Colors.RESET}")
+            print()
+            print_divider()
+            print(f"  {Colors.WHITE}{Colors.BOLD}Processing {len(media_files)} file(s){Colors.RESET}")
+            print(f"     {Colors.GRAY}Sequential files, 5 parallel chunks per file{Colors.RESET}")
+            print_divider()
 
             # Process files SEQUENTIALLY (one file at a time)
             # Each file gets a FRESH transcriber/client to prevent connection pooling issues
             # Each file's chunks are processed IN PARALLEL (for speed)
             results = []
             for i, media_path in enumerate(media_files, 1):
-                print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*70}{Colors.RESET}")
-                print(f"{Colors.BOLD}{Colors.BLUE}FILE {i}/{len(media_files)}: {media_path.name}{Colors.RESET}")
-                print(f"{Colors.BOLD}{Colors.BLUE}{'='*70}{Colors.RESET}\n")
+                print()
+                file_text = f"  File {i}/{len(media_files)}: {media_path.name}"
+                fw = max(55, len(file_text) + 2)
+                fpad = ' ' * (fw - len(file_text))
+                print(f"{Colors.CYAN}{Colors.BOLD}╔{'═' * fw}╗{Colors.RESET}")
+                print(f"{Colors.CYAN}{Colors.BOLD}║{Colors.RESET}  {Colors.WHITE}{Colors.BOLD}File {i}/{len(media_files)}{Colors.RESET}: {Colors.CYAN}{media_path.name}{Colors.RESET}{fpad}{Colors.CYAN}{Colors.BOLD}║{Colors.RESET}")
+                print(f"{Colors.CYAN}{Colors.BOLD}╚{'═' * fw}╝{Colors.RESET}")
+                print()
 
                 # Create fresh async transcriber for THIS file
                 async with AsyncTranscriber(max_retries=3, max_concurrent=5) as transcriber:
@@ -1492,10 +1513,12 @@ class TranscriptionApp:
                     results.append(result)
 
                     if result:
-                        print(f"\n{Colors.GREEN}✓ File {i}/{len(media_files)} completed successfully{Colors.RESET}")
-                        print(f"{Colors.GREEN}  Transcript: {result.name}{Colors.RESET}")
+                        print()
+                        print_success(f"File {i}/{len(media_files)} completed")
+                        print(f"     {Colors.GRAY}Transcript: {result.name}{Colors.RESET}")
                     else:
-                        print(f"\n{Colors.RED}✗ File {i}/{len(media_files)} FAILED{Colors.RESET}")
+                        print()
+                        print_error(f"File {i}/{len(media_files)} FAILED")
 
             # Analyze results
             successful = sum(1 for r in results if r and not isinstance(r, Exception))
@@ -1505,16 +1528,22 @@ class TranscriptionApp:
                 if not r or isinstance(r, Exception)
             ]
 
-            print_divider()
-            print_status(
-                f"Complete! {successful}/{len(media_files)} files transcribed",
-                "success" if successful == len(media_files) else "warning"
-            )
+            print()
+            if successful == len(media_files):
+                W = 55
+                done_text = f"  Done! {successful}/{len(media_files)} files transcribed."
+                done_pad = ' ' * (W - len(done_text))
+                print(f"{Colors.GREEN}{Colors.BOLD}╔{'═' * W}╗{Colors.RESET}")
+                print(f"{Colors.GREEN}{Colors.BOLD}║{done_text}{done_pad}║{Colors.RESET}")
+                print(f"{Colors.GREEN}{Colors.BOLD}╚{'═' * W}╝{Colors.RESET}")
+            else:
+                print_divider()
+                print_warning(f"Completed {successful}/{len(media_files)} files")
 
             if failed_files:
-                print_status("Failed files:", "error")
+                print_error("Failed files:")
                 for f in failed_files:
-                    print_status(f"• {f.name}", "error")
+                    print(f"     {Colors.RED}• {f.name}{Colors.RESET}")
 
         except KeyboardInterrupt:
             print_status("\nInterrupted by user", "warning")
@@ -1527,9 +1556,17 @@ class TranscriptionApp:
         """Synchronous wrapper for async run."""
         asyncio.run(self.run_async())
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Version Check & Self-Update
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def parse_version(v):
+    """Parse version string like '1.2.0' into a comparable tuple (1, 2, 0)."""
+    try:
+        return tuple(int(x) for x in v.split('.'))
+    except (ValueError, AttributeError):
+        return (0,)
+
 
 def check_for_latest_version():
     """Check GitHub Releases API for a newer version. Returns (latest, url) or None."""
@@ -1546,7 +1583,7 @@ def check_for_latest_version():
         data = json.loads(result.stdout)
         latest = data.get("tag_name", "").lstrip("v")
         url = data.get("html_url", "")
-        if latest and latest != VERSION:
+        if latest and parse_version(latest) > parse_version(VERSION):
             return (latest, url)
         return None
     except Exception:
@@ -1554,55 +1591,74 @@ def check_for_latest_version():
 
 
 def arrow_key_select(options, selected=0):
-    """Interactive arrow-key selector. Falls back to numbered input for non-TTY."""
+    """Interactive arrow-key menu. Returns selected index.
+
+    Uses tty.setcbreak() for raw input on macOS/Linux.
+    Falls back to numbered input if terminal is not a TTY.
+    """
+    import select as sel
+
     if not sys.stdin.isatty():
         for i, opt in enumerate(options):
             print(f"  [{i + 1}] {opt}")
+        choice = input("Choice: ").strip()
         try:
-            choice = int(input("Enter choice: ")) - 1
-            return max(0, min(choice, len(options) - 1))
-        except (ValueError, EOFError):
-            return 0
+            idx = int(choice) - 1
+            return idx if 0 <= idx < len(options) else len(options) - 1
+        except (ValueError, IndexError):
+            return len(options) - 1
 
-    import tty, termios, select as sel
+    import tty, termios
 
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
+    num_opts = len(options)
 
-    def render():
+    def draw():
+        sys.stdout.write(f"\033[{num_opts}A")
         for i, opt in enumerate(options):
-            marker = f"{Colors.GREEN}>{Colors.RESET}" if i == selected else " "
-            highlight = Colors.BOLD if i == selected else ""
-            print(f"  {marker} {highlight}{opt}{Colors.RESET}")
+            if i == selected:
+                sys.stdout.write(
+                    f"\r  {Colors.GREEN}{Colors.BOLD}> {opt}{Colors.RESET}\033[K\n"
+                )
+            else:
+                sys.stdout.write(
+                    f"\r    {Colors.GRAY}{opt}{Colors.RESET}\033[K\n"
+                )
+        sys.stdout.flush()
+
+    for _ in options:
+        print()
+    draw()
 
     try:
         tty.setcbreak(fd)
-        render()
         while True:
-            ch = os.read(fd, 1)
-            if ch == b'\x03':
+            b = os.read(fd, 1)
+
+            if b in (b'\r', b'\n'):
+                break
+            if b == b'\x03':
                 raise KeyboardInterrupt
-            if ch in (b'\r', b'\n'):
-                return selected
-            if ch == b'\x1b':
-                ready, _, _ = sel.select([fd], [], [], 0.05)
-                if ready:
-                    seq = os.read(fd, 2)
-                    if seq == b'[A':
-                        selected = (selected - 1) % len(options)
-                    elif seq == b'[B':
-                        selected = (selected + 1) % len(options)
-                    # Move cursor up to redraw
-                    sys.stdout.write(f"\033[{len(options)}A\033[2K")
-                    for i in range(len(options)):
-                        sys.stdout.write("\033[2K")
-                        if i < len(options) - 1:
-                            sys.stdout.write("\033[1B")
-                    sys.stdout.write(f"\033[{len(options) - 1}A\r")
-                    sys.stdout.flush()
-                    render()
+
+            if b == b'\x1b':
+                if sel.select([fd], [], [], 0.05)[0]:
+                    b2 = os.read(fd, 1)
+                    if b2 == b'[' and sel.select([fd], [], [], 0.05)[0]:
+                        b3 = os.read(fd, 1)
+                        if b3 == b'A':
+                            selected = (selected - 1) % num_opts
+                        elif b3 == b'B':
+                            selected = (selected + 1) % num_opts
+                        draw()
+                else:
+                    selected = num_opts - 1
+                    break
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+    print()
+    return selected
 
 
 def run_git_update():
@@ -1611,27 +1667,29 @@ def run_git_update():
     try:
         fetch = subprocess.run(
             ["git", "fetch", "origin"],
-            cwd=script_dir, capture_output=True, text=True, timeout=15
+            cwd=script_dir, capture_output=True, text=True, timeout=30
         )
         if fetch.returncode != 0:
-            print(f"{Colors.RED}{Symbols.CROSS} Git fetch failed{Colors.RESET}")
+            print_error(f"Update failed: {fetch.stderr.strip()}")
             return False
         reset = subprocess.run(
             ["git", "reset", "--hard", "origin/main"],
-            cwd=script_dir, capture_output=True, text=True, timeout=15
+            cwd=script_dir, capture_output=True, text=True, timeout=10
         )
-        if reset.returncode != 0:
-            print(f"{Colors.RED}{Symbols.CROSS} Git reset failed{Colors.RESET}")
+        if reset.returncode == 0:
+            print_success("Updated successfully!")
+            return True
+        else:
+            print_error(f"Update failed: {reset.stderr.strip()}")
             return False
-        return True
     except subprocess.TimeoutExpired:
-        print(f"{Colors.RED}{Symbols.CROSS} Git operation timed out{Colors.RESET}")
+        print_error("Update timed out. Check your network connection.")
         return False
     except FileNotFoundError:
-        print(f"{Colors.RED}{Symbols.CROSS} Git is not installed{Colors.RESET}")
+        print_error("git not found. Please install git or update manually.")
         return False
     except OSError as e:
-        print(f"{Colors.RED}{Symbols.CROSS} Git error: {e}{Colors.RESET}")
+        print_error(f"Update failed: {e}")
         return False
 
 
@@ -1642,28 +1700,34 @@ def check_and_prompt_update():
         return
 
     latest, url = update_info
-    print(f"\n{Colors.YELLOW}{Symbols.STAR} New version available: v{latest} (current: v{VERSION}){Colors.RESET}")
+
+    print()
+    print(f"  {Colors.YELLOW}{Colors.BOLD}New version available: v{latest}{Colors.RESET}"
+          f"  {Colors.GRAY}(current: v{VERSION}){Colors.RESET}")
     print()
 
     choice = arrow_key_select(["Update Now", "Continue"], selected=0)
-    print()
 
     if choice == 0:
-        print(f"{Colors.BLUE}{Symbols.PROCESS} Updating to v{latest}...{Colors.RESET}")
+        print()
+        print_process(f"Updating to v{latest}...")
         if run_git_update():
-            print(f"{Colors.GREEN}{Symbols.CHECK} Updated successfully! Restarting...{Colors.RESET}\n")
+            print()
+            print_info("Restarting with updated version...")
+            time.sleep(1)
             # Clear bytecode cache so Python reads the new source
             cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '__pycache__')
             if os.path.isdir(cache_dir):
                 shutil.rmtree(cache_dir)
             os.execv(sys.executable, [sys.executable] + sys.argv)
         else:
-            print(f"{Colors.YELLOW}{Symbols.WARNING} Update failed, continuing with current version{Colors.RESET}\n")
+            print()
+            print_warning("Continuing with current version.")
 
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Entry Point
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def main():
     check_and_prompt_update()
@@ -1672,19 +1736,15 @@ def main():
     def cleanup_on_interrupt(signum, frame):
         sys.stdout.write('\033[?25h')  # Show cursor
         sys.stdout.flush()
-        print(f"\n{Colors.YELLOW}{Symbols.WARNING} Interrupted by user{Colors.RESET}")
+        print()
+        print_warning("Interrupted by user")
         sys.exit(1)
 
     signal.signal(signal.SIGINT, cleanup_on_interrupt)
     signal.signal(signal.SIGTERM, cleanup_on_interrupt)
 
     try:
-        # Install requirements first
-        if not install_requirements():
-            return
-
         # Clear screen before starting
-        time.sleep(1.5)
         os.system('cls' if os.name == 'nt' else 'clear')
 
         # Create necessary directories if they don't exist
@@ -1693,19 +1753,24 @@ def main():
             dir_path = Path(dir_name)
             if not dir_path.exists():
                 dir_path.mkdir(exist_ok=True)
-                print(f"{Colors.BLUE}{Symbols.INFO} Created {dir_name} directory{Colors.RESET}")
+                print_info(f"Created {dir_name} directory")
 
-        # Process local media files
-        print(f"\n{Colors.BLUE}Processing media files from: media-files/{Colors.RESET}")
-        print(f"{Colors.BLUE}Supported formats: Video {', '.join(sorted(SUPPORTED_VIDEO_FORMATS))}{Colors.RESET}")
-        print(f"{Colors.BLUE}                   Audio {', '.join(sorted(SUPPORTED_AUDIO_FORMATS))}{Colors.RESET}")
-        print(f"{Colors.BLUE}Unsupported formats will be auto-converted to MP3{Colors.RESET}\n")
+        # Show source and format info
+        print_divider()
+        print(f"  {Colors.WHITE}{Colors.BOLD}Source:{Colors.RESET}  {Colors.CYAN}media-files/{Colors.RESET}")
+        print(f"  {Colors.WHITE}{Colors.BOLD}Video:{Colors.RESET}   {Colors.GRAY}{', '.join(sorted(SUPPORTED_VIDEO_FORMATS))}{Colors.RESET}")
+        print(f"  {Colors.WHITE}{Colors.BOLD}Audio:{Colors.RESET}   {Colors.GRAY}{', '.join(sorted(SUPPORTED_AUDIO_FORMATS))}{Colors.RESET}")
+        print(f"  {Colors.GRAY}Unsupported formats auto-converted to MP3{Colors.RESET}")
+        print_divider()
+        print()
 
         app = TranscriptionApp()
         app.run()
 
     except KeyboardInterrupt:
-        print(f"\n{Colors.YELLOW}{Symbols.INFO} Program terminated by user{Colors.RESET}")
+        print()
+        print()
+        print_info("Interrupted. Goodbye!")
         sys.exit(0)
 
 if __name__ == "__main__":
