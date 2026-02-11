@@ -1,55 +1,45 @@
 <div align="center">
 
-# media-to-text
+# Media to Text
 
 **AI-Powered Media Transcription Using OpenAI's Whisper**
 
 [![Version](https://img.shields.io/badge/Version-1.1.0-red?logo=github&logoColor=white)](https://github.com/Zer0Wav3s/media-to-text/releases)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Whisper-green?logo=openai&logoColor=white)](https://openai.com/research/whisper)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python&logoColor=white)](https://www.python.org)
-[![FFmpeg](https://img.shields.io/badge/FFmpeg-required-red?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
+[![FFmpeg](https://img.shields.io/badge/FFmpeg-required-orange?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
 </div>
 
----
-
-> **Disclaimer:** This project is experimental and provided "as-is" without any warranties. The author assumes no responsibility or liability for how you use this script. Use at your own risk.
+> **Disclaimer**: This is an experimental project provided as-is. The author assumes no responsibility for how this tool is used. By using this software, you agree that you are solely responsible for ensuring your use complies with applicable laws and terms of service. Use at your own risk.
 
 ---
 
-### Overview
+A command-line tool that converts audio and video files to text using OpenAI's Whisper API. Automatically splits large files into chunks and transcribes them concurrently for maximum speed.
 
-A high-performance command-line tool that uses AI to automatically:
-- Convert any audio/video to text with high accuracy
-- **Auto-convert unsupported formats** (like .caf) to MP3 automatically
-- **Optimized audio processing** (16kHz/16kbps/mono) for 20-50% faster API transcription
-- Split large files into chunks under 25MB (OpenAI's limit)
-- **Transcribe chunks in parallel** (5 concurrent) for maximum speed
-- Process files sequentially with fresh API clients (prevents connection issues)
+## Features
+
+- **Async concurrent processing** with 5 parallel chunk uploads per file
+- **PyAV audio extraction** with automatic FFmpeg fallback for unsupported formats
+- **Optimized audio** (16kHz/16kbps/mono) for 20-50% faster API transcription
+- **Smart chunking** that auto-splits files exceeding OpenAI's 25MB limit
 - **Brew-style progress display** with real-time chunk status and ETA calculations
-- Handle errors gracefully with automatic retry logic and cleanup
-- Combine multiple transcripts into a single file
-
-**Key Features:**
-- Async/concurrent chunk processing (5 simultaneous API calls per file)
-- PyAV for fast audio extraction with FFmpeg fallback
-- Optimized audio settings reduce API processing time by 20-50%
-- Fresh API client per file prevents connection pool hangs
-- Async file I/O operations throughout
-- **Brew-style multi-line progress display** with ANSI terminal support
 - **Smart terminal fallback** for CI/CD and non-ANSI environments
+- **Automatic retry logic** with 3 attempts per chunk on failure
+- **Transcript combiner** to merge multiple transcripts into a single file
 
-This is an open-source setup designed to be easily:
-- Forked and modified for your specific needs
-- Integrated into larger projects
-- Extended with additional features
-- Shared and improved by the community
+## Supported Formats
 
-Feel free to use, modify, and share this tool as you see fit!
+| Video | Audio |
+|-------|-------|
+| `.mp4` `.mkv` `.webm` | `.mp3` `.wav` `.flac` |
+| `.avi` `.mov` `.wmv` | `.aac` `.m4a` `.ogg` |
+| `.flv` `.m4v` `.3gp` | `.opus` `.wma` `.aiff` `.amr` |
 
-### Quick Start
+Unsupported formats (like `.caf`) are automatically converted to MP3 using FFmpeg.
 
-1. **Set Up Environment**
+## Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/Zer0Wav3s/media-to-text.git
@@ -57,143 +47,61 @@ cd media-to-text
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Install FFmpeg (required)
+brew install ffmpeg        # macOS
+sudo apt install ffmpeg    # Ubuntu/Debian
 ```
 
-2. **Add Your API Key**
-```bash
-# The script will create .env for you
-# Just add your OpenAI API key:
-OPENAI_API_KEY=your_key_here
-```
+## Usage
 
-3. **Run It**
 ```bash
-# Transcribe media files
 python transcribe.py
+```
 
-# Combine transcripts (optional)
+1. **First run** creates a `.env` file — add your OpenAI API key: `OPENAI_API_KEY=your_key_here`
+2. **Place media files** in the `media-files/` directory
+3. **Run the script** — select files from the interactive menu
+4. **Transcripts** are saved to the `transcripts/` directory
+
+### Combining Transcripts
+
+```bash
 python combine_transcripts.py
 ```
 
-### Supported Formats
+Merges all transcripts in `transcripts/` into a single cleaned text file with timestamps and headers removed.
 
-<div align="left">
+## How It Works
 
-| Video Formats | Audio Formats |
-|:-------------:|:-------------:|
-| `.mp4` `.mkv` | `.mp3` `.wav` |
-| `.webm` `.avi` | `.flac` `.aac` |
-| `.mov` `.wmv` | `.m4a` `.ogg` |
-| `.flv` `.m4v` | `.opus` `.wma` |
-| `.3gp` | `.aiff` `.amr` |
+1. **Audio Extraction** — PyAV extracts audio at 16kHz/16kbps/mono (FFmpeg fallback for unsupported formats)
+2. **Chunking** — Files over 25MB are split into gapless chunks using FFmpeg
+3. **Parallel Transcription** — Up to 5 chunks sent to the Whisper API concurrently
+4. **Assembly** — Chunk transcripts are combined in order and saved
+5. **Cleanup** — Temporary files are removed automatically
 
-**Auto-Conversion:** Unsupported formats (like `.caf`) are automatically converted to MP3 using FFmpeg before transcription.
+Each file gets a fresh API client to prevent connection pool hangs. Ctrl+C restores cursor visibility and cleans up temp files.
 
-</div>
+## Configuration
 
-### Requirements
+Edit constants in `transcribe.py` to customize:
+
+```python
+MAX_FILE_SIZE = 25 * 1024 * 1024   # 25MB chunk limit
+max_concurrent = 5                  # Parallel API calls per file
+```
+
+## Requirements
 
 - Python 3.8+
-- FFmpeg (for audio extraction and format conversion)
+- FFmpeg installed and available in PATH
 - OpenAI API key
-- Required packages:
-  ```
-  openai>=1.60.2
-  python-dotenv>=1.0.1
-  av>=13.0.0 (PyAV - fast FFmpeg bindings)
-  aiofiles>=24.1.0
-  ```
+- Core dependencies:
+  - `openai>=1.60.2`
+  - `python-dotenv>=1.0.1`
+  - `av>=13.0.0` (PyAV)
+  - `aiofiles>=24.1.0`
 
-### Pro Tips
+## License
 
-**For Best Results:**
-- Use clear audio with minimal background noise
-- Ensure sufficient disk space for temporary files
-- Monitor your OpenAI API usage/costs
-- Expect 7-10 minutes per hour of audio (varies by server load)
-
-**Performance Optimization:**
-- **Chunks processed in parallel** (5 concurrent API calls per file)
-- **Files processed sequentially** (one at a time with fresh API client)
-- Audio optimized to 16kHz/16kbps/mono (20-50% faster API processing)
-- Adjust concurrency in `AsyncTranscriber(max_concurrent=N)` if needed
-- Higher concurrency = faster but may hit API rate limits
-- Default settings optimized for OpenAI tier limits
-
-**File Processing:**
-- **Auto-conversion:** Unsupported formats automatically converted to MP3
-- **Smart chunking:** Files >25MB split automatically (most optimized files stay under limit)
-- **Parallel chunks:** Multiple chunks from same file processed simultaneously
-- **Fresh client:** Each file gets new API client to prevent connection hangs
-- **Progress tracking:** Brew-style multi-line display with chunk status and ETA
-
-**Transcript Combination:**
-- All transcripts are saved in the `transcripts/` directory
-- Use `combine_transcripts.py` to merge multiple transcripts
-- Files are read and processed concurrently for speed
-- Combined file optimized for readability
-
-### Project Structure
-```
-media-to-text/
-├── transcribe.py         # Main transcription script (async)
-├── combine_transcripts.py # Transcript combiner (async)
-├── requirements.txt      # Dependencies
-├── .env                 # API key
-├── media-files/         # Input files
-├── transcripts/         # Individual transcripts
-└── temp/               # Processing files
-```
-
-### Changelog
-
-#### Version 1.1.0 (2026-01-27)
-**Brew-Style Progress Display & Async Architecture**
-- **Brew-style multi-line progress display** with real-time chunk status updates
-- **ANSI terminal support** with cursor control for in-place updates
-- **Smart fallback mode** for CI/CD, NO_COLOR, and non-TTY environments
-- **ETA calculations** with elapsed time and remaining time estimates
-- **Async/concurrent architecture** with 5 parallel chunk processing per file
-- **PyAV integration** replacing MoviePy for faster audio extraction
-- **Optimized audio processing** (16kHz/16kbps/mono) for 20-50% faster API transcription
-- **Auto-conversion** of unsupported formats (e.g., .caf) to MP3 using FFmpeg
-- **Fresh API client per file** prevents connection pool hangs
-- **Signal handling** (SIGINT/SIGTERM) restores cursor visibility on interrupt
-- **Terminal capability detection** (TTY, NO_COLOR, Windows ctypes support)
-- Removed YouTube support to simplify codebase
-- Fixed parallel chunk processing for optimal speed
-- Added CLAUDE.md for AI assistant context
-
-#### Version 1.0.1 (2024-12-17)
-- Added .gitignore file
-- Minor documentation updates
-
-#### Version 1.0.0 (2024-12-17)
-- Initial release
-- Basic transcription functionality with OpenAI Whisper
-- Support for multiple audio/video formats
-- Automatic chunk processing for files >25MB
-- Transcript combination utility
-
-### Roadmap
-
-Check out our [Future Updates & Enhancements](FUTURE_UPDATES.md) document for planned features and improvements.
-
-### Contributing
-
-Found a bug or want to contribute? Feel free to:
-- Open an issue
-- Submit a pull request
-- Suggest improvements
-
-### License
-
-MIT License - Use it, modify it, share it.
-
----
-
-<div align="center">
-
-**Made by [Zer0Wav3s](https://github.com/Zer0Wav3s)**
-
-</div>
+MIT
