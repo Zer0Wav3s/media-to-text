@@ -4,7 +4,7 @@
 
 **AI-Powered Media Transcription Using OpenAI's Whisper**
 
-[![Version](https://img.shields.io/badge/Version-1.1.0-red?logo=github&logoColor=white)](https://github.com/Zer0Wav3s/media-to-text/releases)
+[![Version](https://img.shields.io/badge/Version-1.2.0-red?logo=github&logoColor=white)](https://github.com/Zer0Wav3s/media-to-text/releases)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Whisper-green?logo=openai&logoColor=white)](https://openai.com/research/whisper)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python&logoColor=white)](https://www.python.org)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-required-orange?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)

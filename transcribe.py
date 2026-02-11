@@ -10,7 +10,7 @@ This script provides a robust solution for transcribing media files by:
 6. Implementing error handling and cleanup
 
 Author: OkhDev
-Version: 1.1.0
+Version: 1.2.0
 """
 
 import os
@@ -103,6 +103,9 @@ logging.getLogger('libav').setLevel(logging.ERROR)
 # ============================================================================
 # Constants and Configuration
 # ============================================================================
+
+VERSION = "1.2.0"
+GITHUB_REPO = "Zer0Wav3s/media-to-text"
 
 MAX_FILE_SIZE = 25 * 1024 * 1024  # 25MB in bytes
 UPDATE_INTERVAL = 15  # seconds
@@ -1525,10 +1528,146 @@ class TranscriptionApp:
         asyncio.run(self.run_async())
 
 # ============================================================================
+# Version Check & Self-Update
+# ============================================================================
+
+def check_for_latest_version():
+    """Check GitHub Releases API for a newer version. Returns (latest, url) or None."""
+    try:
+        result = subprocess.run(
+            ["curl", "-s", "--connect-timeout", "2", "--max-time", "5",
+             "-H", "Accept: application/vnd.github+json",
+             "-H", "User-Agent: media-to-text-update-check",
+             f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"],
+            capture_output=True, text=True, timeout=7
+        )
+        if result.returncode != 0:
+            return None
+        data = json.loads(result.stdout)
+        latest = data.get("tag_name", "").lstrip("v")
+        url = data.get("html_url", "")
+        if latest and latest != VERSION:
+            return (latest, url)
+        return None
+    except Exception:
+        return None
+
+
+def arrow_key_select(options, selected=0):
+    """Interactive arrow-key selector. Falls back to numbered input for non-TTY."""
+    if not sys.stdin.isatty():
+        for i, opt in enumerate(options):
+            print(f"  [{i + 1}] {opt}")
+        try:
+            choice = int(input("Enter choice: ")) - 1
+            return max(0, min(choice, len(options) - 1))
+        except (ValueError, EOFError):
+            return 0
+
+    import tty, termios, select as sel
+
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+
+    def render():
+        for i, opt in enumerate(options):
+            marker = f"{Colors.GREEN}>{Colors.RESET}" if i == selected else " "
+            highlight = Colors.BOLD if i == selected else ""
+            print(f"  {marker} {highlight}{opt}{Colors.RESET}")
+
+    try:
+        tty.setcbreak(fd)
+        render()
+        while True:
+            ch = os.read(fd, 1)
+            if ch == b'\x03':
+                raise KeyboardInterrupt
+            if ch in (b'\r', b'\n'):
+                return selected
+            if ch == b'\x1b':
+                ready, _, _ = sel.select([fd], [], [], 0.05)
+                if ready:
+                    seq = os.read(fd, 2)
+                    if seq == b'[A':
+                        selected = (selected - 1) % len(options)
+                    elif seq == b'[B':
+                        selected = (selected + 1) % len(options)
+                    # Move cursor up to redraw
+                    sys.stdout.write(f"\033[{len(options)}A\033[2K")
+                    for i in range(len(options)):
+                        sys.stdout.write("\033[2K")
+                        if i < len(options) - 1:
+                            sys.stdout.write("\033[1B")
+                    sys.stdout.write(f"\033[{len(options) - 1}A\r")
+                    sys.stdout.flush()
+                    render()
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+
+def run_git_update():
+    """Fetch and hard-reset to origin/main. Returns True on success."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    try:
+        fetch = subprocess.run(
+            ["git", "fetch", "origin"],
+            cwd=script_dir, capture_output=True, text=True, timeout=15
+        )
+        if fetch.returncode != 0:
+            print(f"{Colors.RED}{Symbols.CROSS} Git fetch failed{Colors.RESET}")
+            return False
+        reset = subprocess.run(
+            ["git", "reset", "--hard", "origin/main"],
+            cwd=script_dir, capture_output=True, text=True, timeout=15
+        )
+        if reset.returncode != 0:
+            print(f"{Colors.RED}{Symbols.CROSS} Git reset failed{Colors.RESET}")
+            return False
+        return True
+    except subprocess.TimeoutExpired:
+        print(f"{Colors.RED}{Symbols.CROSS} Git operation timed out{Colors.RESET}")
+        return False
+    except FileNotFoundError:
+        print(f"{Colors.RED}{Symbols.CROSS} Git is not installed{Colors.RESET}")
+        return False
+    except OSError as e:
+        print(f"{Colors.RED}{Symbols.CROSS} Git error: {e}{Colors.RESET}")
+        return False
+
+
+def check_and_prompt_update():
+    """Check for updates and prompt user if a new version is available."""
+    update_info = check_for_latest_version()
+    if update_info is None:
+        return
+
+    latest, url = update_info
+    print(f"\n{Colors.YELLOW}{Symbols.STAR} New version available: v{latest} (current: v{VERSION}){Colors.RESET}")
+    print()
+
+    choice = arrow_key_select(["Update Now", "Continue"], selected=0)
+    print()
+
+    if choice == 0:
+        print(f"{Colors.BLUE}{Symbols.PROCESS} Updating to v{latest}...{Colors.RESET}")
+        if run_git_update():
+            print(f"{Colors.GREEN}{Symbols.CHECK} Updated successfully! Restarting...{Colors.RESET}\n")
+            # Clear bytecode cache so Python reads the new source
+            cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '__pycache__')
+            if os.path.isdir(cache_dir):
+                shutil.rmtree(cache_dir)
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+        else:
+            print(f"{Colors.YELLOW}{Symbols.WARNING} Update failed, continuing with current version{Colors.RESET}\n")
+
+
+# ============================================================================
 # Entry Point
 # ============================================================================
 
 def main():
+    check_and_prompt_update()
+
     # Signal handler to restore cursor on interrupt
     def cleanup_on_interrupt(signum, frame):
         sys.stdout.write('\033[?25h')  # Show cursor
