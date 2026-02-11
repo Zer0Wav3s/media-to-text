@@ -13,6 +13,10 @@
 
 ---
 
+> **Disclaimer:** This project is experimental and provided "as-is" without any warranties. The author assumes no responsibility or liability for how you use this script. Use at your own risk.
+
+---
+
 ### Overview
 
 A high-performance command-line tool that uses AI to automatically:
